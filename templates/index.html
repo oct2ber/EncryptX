@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EncryptX — Encryptor App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #0d1117;
+      color: #e5e5e5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: #0f1115;
+      padding: 40px;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    h2 {
+      text-align: center;
+      font-size: 22px;
+      color: #22c55e;
+      margin: 0 0 10px;
+    }
+    textarea, input[type="password"] {
+      width: 100%;
+      padding: 12px 15px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      resize: none;
+      background: #1a1d22;
+      color: #e5e5e5;
+    }
+    select, button {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+    }
+    select {
+      background: #1a1d22;
+      color: #e5e5e5;
+    }
+    button {
+      background-color: #22c55e;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+    button:hover {
+      background-color: #16a34a;
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .output {
+      background-color: #1a1d22;
+      border-left: 4px solid #22c55e;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #2c2f35;
+      color: #22c55e;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #passwordBox input {
+      max-width: 180px;
+    }
+    .feature-list {
+      font-size: 12px;
+      line-height: 1.6;
+      background: #181b20;
+      padding: 10px 14px;
+      border-radius: 8px;
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🔐 EncryptX</h2>
+    <form method="POST">
+      <textarea name="message" placeholder="Type your message..." required>{{ request.form.get("message") or "" }}</textarea>
+
+      <select name="method" required onchange="togglePassword(this.value)">
+        <option value="">-- Select Method --</option>
+        <option value="Caesar" {% if request.form.get("method") == "Caesar" %}selected{% endif %}>Caesar Cipher</option>
+        <option value="Reverse" {% if request.form.get("method") == "Reverse" %}selected{% endif %}>Reverse Text</option>
+        <option value="SuperSecure" {% if request.form.get("method") == "SuperSecure" %}selected{% endif %}>Super Secure Symbols 🔐</option>
+        <option value="Emoji" {% if request.form.get("method") == "Emoji" %}selected{% endif %}>Emoji Cipher 😂</option>
+        <option value="Morse" {% if request.form.get("method") == "Morse" %}selected{% endif %}>Morse Code</option>
+        <option value="Hash" {% if request.form.get("method") == "Hash" %}selected{% endif %}>SHA256 Hash 🔒</option>
+        <option value="Barcode" {% if request.form.get("method") == "Barcode" %}selected{% endif %}>Barcode Generator 📦</option>
+        <option value="Auto" {% if request.form.get("method") == "Auto" %}selected{% endif %}>🧠 Auto Decrypt</option>
+      </select>
+
+      <div id="passwordBox" style="display: none; margin-top: 10px;">
+        <input type="password" name="password" placeholder="Password" />
+      </div>
+
+      <div class="btn-group">
+        <button type="submit" name="action" value="Encrypt">Encrypt</button>
+        <button type="submit" name="action" value="Decrypt">Decrypt</button>
+      </div>
+    </form>
+
+    {% if result %}
+      <div class="output">
+        <strong>{{ action }} Result:</strong><br>
+        <span id="resultText">{{ result|safe }}</span>
+        <button class="copy-btn" onclick="copyText()">Copy</button>
+      </div>
+    {% endif %}
+
+    <div class="feature-list">
+      <strong>Features:</strong><br>
+      • Caesar / Reverse / Emoji / Morse / Super Secure / Hash / Barcode<br>
+      • Auto Decrypt detects type automatically 🧠<br>
+      • Password protection for SuperSecure<br>
+      • Instant Barcode Preview 📷<br>
+      • Copy button, Mobile-friendly, Clean UI
+    </div>
+  </div>
+
+  <script>
+    function togglePassword(method) {
+      const passwordBox = document.getElementById('passwordBox');
+      const action = "{{ request.form.get('action') }}";
+      if (method === 'SuperSecure' && action === 'Decrypt') {
+        passwordBox.style.display = 'block';
+      } else {
+        passwordBox.style.display = 'none';
+      }
+    }
+    togglePassword("{{ request.form.get('method') }}");
+
+    function copyText() {
+      const resultSpan = document.getElementById('resultText');
+      const tempInput = document.createElement('textarea');
+      tempInput.value = resultSpan.innerText;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      alert("✅ Text copied to clipboard!");
+    }
+  </script>
+</body>
+</html>
